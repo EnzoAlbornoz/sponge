@@ -1,4 +1,4 @@
-package br.ufsc;
+package br.ufsc.server;
 
 /**
  * Hello world!
