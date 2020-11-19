@@ -49,26 +49,26 @@ public class ClientConnector {
                 switch(ctx.getRequestMethod()) {
                     case "GET": 
                         // Buscar arquivo ou listar arquivos
-                        // final Matcher idMatcher = Pattern
-                        //     .compile("^/(?<id>[a-zA-Z_\\-0-9]+).*")
-                        //     .matcher(
-                        //         ctx.getRequestURI().getPath()
-                        //     );
-                        // if (idMatcher.matches()) {
                         // Check for id existance
                         if (ctx.getRequestURI().getPath().equals("/")) {
                             // Trying to list all files
+                            System.out.println("Received get to LIST files");
                             ClientController.getInstance().getAllFiles(ctx);
                         } else {
                             // Trying to fetch an archive by id
-                            System.out.println("Not Implemented");
+                            System.out.println("Received get to " + ctx.getRequestURI().getPath());
+                            ClientController.getInstance().getFile(ctx);
                         }
                         break;
                     case "POST":
                         // Cria um novo arquivo
+                        System.out.println("Create File");
+                        ClientController.getInstance().createFile(ctx);
                         break;
                     case "PUT":
                         // Substitui o conteudo de um arquivo
+                        System.out.println("Update File");
+                        ClientController.getInstance().updateFile(ctx);
                         break;
                     default:
                         // Non valid method
