@@ -8,8 +8,10 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.commons.lang3.ArrayUtils;
+import org.tinylog.Logger;
 
 import br.ufsc.sponge.server.config.ServerConfiguration;
 import br.ufsc.sponge.server.repositories.*;
@@ -41,28 +43,38 @@ public class FileRepository {
     }
 
     public void initialize(SettingsManager settings) throws IOException {
+        Logger.info("Initializing");
         // Initialize Settings
         this.settings = settings;
         // Initialize Files Cache
         var sFolderPath = this.getSharedFolderPath();
+        Logger.info("Searching for shared folder {}", sFolderPath.toString());
         if (this.isStoragePresent()) {
+            Logger.info("Shared folder exists");
+            Logger.info("[Files] Loading files");
             // Load file paths
             var filePaths = Files.newDirectoryStream(sFolderPath);
             // Process files
             for (Path filePath : filePaths) {
                 // Read File Content
                 var physicalFile = filePath.toFile();
+                Logger.info("[File] Found {}", physicalFile.getName());
                 // Transforms it into consumable file
                 var vFile = new VirtualFile(physicalFile);
                 // Add vfile to cache
                 this.cachedFiles.put(vFile.getId(), vFile);
             }
+            Logger.info("[Files] All files loaded");
         } else {
             // Create folder
+            Logger.info("Shared folder not found");
+            Logger.info("Creating new shared folder");
             Files.createDirectories(sFolderPath);
+            Logger.info("Shared folder created");
         }
         // Mark as Initialized
         this.initialized = true;
+        Logger.info("Initialized");
     }
 
     public List<VirtualFile> listFiles() throws IOException {
@@ -72,7 +84,6 @@ public class FileRepository {
     public VirtualFile createFile(String name, Long date, byte[] content) throws IOException {
         VirtualFile newFile = new VirtualFile(name, date, content);
         Path sharedFolderPath = this.getSharedFolderPath();
-        System.out.println(sharedFolderPath.resolve(newFile.toFileNameHash()));
         try {
             // Start Transaction
             this.cachedFiles.put(newFile.getId(), newFile);
@@ -93,7 +104,6 @@ public class FileRepository {
         var cachedFile = this.cachedFiles.get(fileId);
         if (cachedFile.getContent().isEmpty()) {
             // Read File Content
-            System.out.println("reading file");
             var contentStream = new FileInputStream(
                 new File(
                     this.getSharedFolderPath().toFile(),
@@ -105,19 +115,25 @@ public class FileRepository {
         }
         return cachedFile;
     }
-    public void updateFile(VirtualFile modifiedFile, VirtualFile originalFile) throws IOException {
+    public void updateFile(VirtualFile modifiedFile, String originalFileHash, String originalFileId) throws IOException {
         Path sharedFolderPath = this.getSharedFolderPath();
-        System.out.println(sharedFolderPath.resolve(modifiedFile.toFileNameHash()));
+        Optional<VirtualFile> deletedFile = Optional.empty();
         try {
             // Start Transaction
+            deletedFile = Optional.of(this.cachedFiles.remove(originalFileId));
             this.cachedFiles.put(modifiedFile.getId(), modifiedFile);
+            // Remove Old From FS
+            Files.deleteIfExists(sharedFolderPath.resolve(originalFileHash));
             // Actually write file to the FS
             var fileWriter = new FileOutputStream(sharedFolderPath.resolve(modifiedFile.toFileNameHash()).toFile());
             fileWriter.write(modifiedFile.getContent().get());
             fileWriter.close();
             // End Transaction
         } catch (Exception e) {
-            // Rollback
+            e.printStackTrace();
+            // Rollback 
+            this.cachedFiles.put(originalFileId, deletedFile.get());
+            // Throw to out scope
             throw e;
         }
     }

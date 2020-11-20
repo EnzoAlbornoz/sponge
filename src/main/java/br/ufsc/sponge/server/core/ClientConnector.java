@@ -13,6 +13,8 @@ import java.net.InetSocketAddress;
 
 import com.sun.net.httpserver.*;
 
+import org.tinylog.Logger;
+
 import ch.jalu.configme.SettingsManager;
 
 
@@ -22,6 +24,7 @@ public class ClientConnector {
     private HttpServer server;
     // Constructors
     public ClientConnector(SettingsManager settings) throws IOException {
+        Logger.info("Initializing");
         // Get Options
         this.settings = settings;
         // Instantiate Server
@@ -33,6 +36,7 @@ public class ClientConnector {
         );
         // Load Routes
         this.registerRoutes();
+        Logger.info("Initialized");
     }
     // Methods
     public void startListening() {
@@ -42,9 +46,10 @@ public class ClientConnector {
     // Helpers
     private void registerRoutes() {
         // Assim --------------------------------------------------
+        Logger.info("Registering routes");
         this.server.createContext("/", (HttpExchange ctx) -> {
             try {
-
+                Logger.info("{} on {}", ctx.getRequestMethod(), ctx.getRequestURI().getPath());
                 // List
                 switch(ctx.getRequestMethod()) {
                     case "GET": 
@@ -52,22 +57,18 @@ public class ClientConnector {
                         // Check for id existance
                         if (ctx.getRequestURI().getPath().equals("/")) {
                             // Trying to list all files
-                            System.out.println("Received get to LIST files");
                             ClientController.getInstance().getAllFiles(ctx);
                         } else {
                             // Trying to fetch an archive by id
-                            System.out.println("Received get to " + ctx.getRequestURI().getPath());
                             ClientController.getInstance().getFile(ctx);
                         }
                         break;
                     case "POST":
                         // Cria um novo arquivo
-                        System.out.println("Create File");
                         ClientController.getInstance().createFile(ctx);
                         break;
                     case "PUT":
                         // Substitui o conteudo de um arquivo
-                        System.out.println("Update File");
                         ClientController.getInstance().updateFile(ctx);
                         break;
                     default:
@@ -83,8 +84,6 @@ public class ClientConnector {
                 ctx.sendResponseHeaders(500, -1);
             }
         });
+        Logger.info("Routes registered");
     }
-
-    // private
-
 }
