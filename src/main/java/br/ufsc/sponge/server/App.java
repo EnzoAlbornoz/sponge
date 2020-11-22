@@ -5,7 +5,6 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.function.Failable;
 import org.tinylog.Logger;
 
 import ch.jalu.configme.SettingsManager;
@@ -19,8 +18,6 @@ import java.util.concurrent.Callable;
 import br.ufsc.sponge.server.config.ServerConfiguration;
 import br.ufsc.sponge.server.config.ServerType;
 import br.ufsc.sponge.server.core.ClientConnector;
-import br.ufsc.sponge.server.core.MasterConnector;
-import br.ufsc.sponge.server.core.SlaveConnector;
 import br.ufsc.sponge.server.interfaces.IConnector;
 import br.ufsc.sponge.server.repositories.FileRepository;
 import br.ufsc.sponge.server.repositories.ReplicationRepository;
@@ -62,19 +59,14 @@ public class App implements Callable<Integer> {
         }
 
         Optional<IConnector> nodeConnector = Optional.empty();
-        Optional<IConnector> clientConnector = Optional.empty();
         if (isMasterNode) {
-            clientConnector = Optional.of(new ClientConnector(settingsManager));
-            nodeConnector = Optional.of(new MasterConnector(settingsManager));
-        } else {
-            nodeConnector = Optional.of(new SlaveConnector(settingsManager));
+            nodeConnector = Optional.of(new ClientConnector(settingsManager));
         }
 
         Logger.info("[Modules] Modules loaded");
         Logger.info("[Core] Starting listening");
 
-        nodeConnector.ifPresent(Failable.asConsumer((node) -> node.startListening()));
-        clientConnector.ifPresent(Failable.asConsumer((node) -> node.startListening()));
+        nodeConnector.ifPresent((node) -> node.startListening());
         
         Logger.info("[Core] Application ready to receive connections");
         
