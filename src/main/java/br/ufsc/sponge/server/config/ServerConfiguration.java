@@ -12,6 +12,8 @@ public final class ServerConfiguration implements SettingsHolder {
     // Optional -> Slave Options
     public static final Property<String> SLAVEOPTS_HOST = PropertyInitializer.newProperty("slaveOptions.host", "0.0.0.0");
     public static final Property<Integer> SLAVEOPTS_PORT = PropertyInitializer.newProperty("slaveOptions.port", 9647);
+    // Optional -> Master Options
+    public static final Property<Integer> MASTEROPTS_PORT = PropertyInitializer.newProperty("masterOptions.port", 9648);
     // Prevent Instantiation
     private ServerConfiguration() {}
 }

@@ -2,11 +2,7 @@ package br.ufsc.sponge.server.core;
 
 import br.ufsc.sponge.server.config.ServerConfiguration;
 import br.ufsc.sponge.server.controllers.ClientController;
-import br.ufsc.sponge.server.services.FileService;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import br.ufsc.sponge.server.repositories.*;
+import br.ufsc.sponge.server.interfaces.IConnector;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -18,7 +14,7 @@ import org.tinylog.Logger;
 import ch.jalu.configme.SettingsManager;
 
 
-public class ClientConnector {
+public class ClientConnector implements IConnector {
     // Properties
     private SettingsManager settings;
     private HttpServer server;
@@ -70,6 +66,10 @@ public class ClientConnector {
                     case "PUT":
                         // Substitui o conteudo de um arquivo
                         ClientController.getInstance().updateFile(ctx);
+                        break;
+                    case "DELETE":
+                        // Deleta um arquivo
+                        ClientController.getInstance().deleteFile(ctx);
                         break;
                     default:
                         // Non valid method
