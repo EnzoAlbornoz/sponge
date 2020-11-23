@@ -112,13 +112,22 @@ public class FileRepository {
         }
         return cachedFile;
     }
-    public void updateFile(VirtualFile modifiedFile, String originalFileHash, String originalFileId) throws IOException {
+    public VirtualFile updateFile(VirtualFile modifiedFile, String originalFileHash, String originalFileId) throws IOException {
         Path sharedFolderPath = this.getSharedFolderPath();
         Optional<VirtualFile> deletedFile = Optional.empty();
         try {
             // Start Transaction
             deletedFile = Optional.of(this.cachedFiles.remove(originalFileId));
             this.cachedFiles.put(modifiedFile.getId(), modifiedFile);
+            // Fetch Data for Backup
+            var deletedFileContent = new FileInputStream(
+                new File(
+                    this.getSharedFolderPath().toFile(),
+                    deletedFile.get().toFileNameHash()
+                    )
+                );
+                deletedFile.get().setContent(deletedFileContent.readAllBytes());
+            deletedFileContent.close();
             // Remove Old From FS
             Files.deleteIfExists(sharedFolderPath.resolve(originalFileHash));
             // Actually write file to the FS
@@ -126,6 +135,7 @@ public class FileRepository {
             fileWriter.write(modifiedFile.getContent().get());
             fileWriter.close();
             // End Transaction
+            return deletedFile.get();
         } catch (Exception e) {
             e.printStackTrace();
             // Rollback 
@@ -138,9 +148,19 @@ public class FileRepository {
     public Optional<VirtualFile> deleteFile(String targetFileId) throws UnsupportedEncodingException, IOException {
         // Remove file from cache
         var removedFile = Optional.ofNullable(this.cachedFiles.remove(targetFileId));
-        // Remove file From FS
+        // Fetch file content then remove its content from FS
         if (removedFile.isPresent()) {
             Path sharedFolderPath = this.getSharedFolderPath();
+            // Backup content
+            var removedFileContent = new FileInputStream(
+                new File(
+                    this.getSharedFolderPath().toFile(),
+                    removedFile.get().toFileNameHash()
+                    )
+                );
+                removedFile.get().setContent(removedFileContent.readAllBytes());
+            removedFileContent.close();
+            // Remove from FS
             Files.deleteIfExists(sharedFolderPath.resolve(removedFile.get().toFileNameHash()));
         }
         // Return possible deleted file
@@ -167,6 +187,52 @@ public class FileRepository {
             return true;
         } catch(Exception e) {
             e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean updateFileSlave(VirtualFile vFile) {
+        Path sharedFolderPath = this.getSharedFolderPath();
+        Optional<VirtualFile> deletedFile = Optional.empty();
+        try {
+            // Start Transaction
+            deletedFile = Optional.of(this.cachedFiles.remove(vFile.getId()));
+            this.cachedFiles.put(vFile.getId(), vFile);
+            // Remove Old From FS
+            Files.deleteIfExists(sharedFolderPath.resolve(deletedFile.get().toFileNameHash()));
+            // Actually write file to the FS
+            var fileWriter = new FileOutputStream(sharedFolderPath.resolve(vFile.toFileNameHash()).toFile());
+            fileWriter.write(vFile.getContent().get());
+            fileWriter.close();
+            // End Transaction
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            // Rollback 
+            this.cachedFiles.put(vFile.getId(), deletedFile.get());
+            // Throw to out scope
+            return false;
+        }
+    }
+
+    public boolean deleteFileSlave(VirtualFile vFile){
+        // Remove file from cache
+        Optional<VirtualFile> removedFile = Optional.empty(); 
+        try {
+            // Remove file from cache
+            removedFile = Optional.ofNullable(this.cachedFiles.remove(vFile.getId()));
+            // Remove file From FS
+            if (removedFile.isPresent()) {
+                Path sharedFolderPath = this.getSharedFolderPath();
+                Files.deleteIfExists(sharedFolderPath.resolve(removedFile.get().toFileNameHash()));
+            }
+            // Return possible deleted file
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            // Rollback
+            removedFile.ifPresent((rFile) -> this.cachedFiles.put(rFile.getId(), rFile));
+            // Notify Error
             return false;
         }
     }

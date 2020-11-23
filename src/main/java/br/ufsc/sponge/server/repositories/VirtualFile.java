@@ -6,7 +6,6 @@ import java.util.Base64;
 
 import java.io.File;
 import java.io.UnsupportedEncodingException;
-import java.nio.file.Path;
 import java.util.Date;
 import java.util.Optional;
 
@@ -18,14 +17,23 @@ public class VirtualFile {
     private Optional<byte[]> content = Optional.empty();
     private boolean physical = false; // read past tense
 
-    private VirtualFile(VirtualFile vf) {
-        this.name = vf.name;
-        this.id = vf.id;
-        this.date = vf.date;
-        this.size = vf.size;
-        this.content = vf.content;
-        this.physical = vf.physical;
+    private VirtualFile() {}
+
+    public static VirtualFile fromSerializable(SerVirtualFile sFile) {
+        var vFile = new VirtualFile();
+        vFile.name = sFile.name;
+        vFile.id = sFile.id;
+        vFile.date = sFile.date;
+        vFile.size = sFile.size;
+        vFile.content = Optional.ofNullable(sFile.content);
+        vFile.physical = false;
+        return vFile;
     }
+
+    public SerVirtualFile toSerializable() {
+        return new SerVirtualFile(this);
+    }
+
 
     public VirtualFile(String name, Long date, Long size) {
         this.name = name;
@@ -106,9 +114,5 @@ public class VirtualFile {
             new String(Base64.getEncoder().encode(this.name.getBytes()), "UTF-8")
         };
         return String.join("_", params); 
-    }
-
-    public VirtualFile clone() {
-        return new VirtualFile(this);
     }
 }

@@ -4,8 +4,9 @@ import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
-import org.apache.commons.lang3.StringUtils;
 import org.tinylog.Logger;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.function.Failable;
 
 import ch.jalu.configme.SettingsManager;
 import ch.jalu.configme.SettingsManagerBuilder;
@@ -18,6 +19,8 @@ import java.util.concurrent.Callable;
 import br.ufsc.sponge.server.config.ServerConfiguration;
 import br.ufsc.sponge.server.config.ServerType;
 import br.ufsc.sponge.server.core.ClientConnector;
+import br.ufsc.sponge.server.core.MasterConnector;
+import br.ufsc.sponge.server.core.SlaveConnector;
 import br.ufsc.sponge.server.interfaces.IConnector;
 import br.ufsc.sponge.server.repositories.FileRepository;
 import br.ufsc.sponge.server.repositories.ReplicationRepository;
@@ -58,16 +61,25 @@ public class App implements Callable<Integer> {
             ReplicationRepository.getInstance().initialize(settingsManager);
         }
 
+        Optional<IConnector> clientConnector = Optional.empty();
         Optional<IConnector> nodeConnector = Optional.empty();
         if (isMasterNode) {
-            nodeConnector = Optional.of(new ClientConnector(settingsManager));
+            // Instantiate Master Connectors
+            clientConnector = Optional.of(new ClientConnector(settingsManager));
+            nodeConnector = Optional.of(MasterConnector.create(settingsManager));
+            // Update Repositories
+            ReplicationRepository.getInstance().registerConnector((MasterConnector) nodeConnector.get());
+        } else {
+            // Instantiate Master Connectors
+            nodeConnector = Optional.of(SlaveConnector.create(settingsManager));
         }
 
         Logger.info("[Modules] Modules loaded");
         Logger.info("[Core] Starting listening");
 
-        nodeConnector.ifPresent((node) -> node.startListening());
-        
+        clientConnector.ifPresent(Failable.asConsumer((node) -> node.startListening()));
+        nodeConnector.ifPresent(Failable.asConsumer((node) -> node.startListening()));
+
         Logger.info("[Core] Application ready to receive connections");
         
         return 0;

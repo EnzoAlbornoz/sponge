@@ -1,0 +1,9 @@
+instance:
+    type: SLAVE
+    port: 9651
+    sharedFolder: ./keko3
+slaveOptions:
+    host: 0.0.0.0
+    port: 9648
+masterOptions:
+    port: 9648

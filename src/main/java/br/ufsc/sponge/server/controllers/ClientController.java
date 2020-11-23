@@ -18,6 +18,7 @@ import org.easygson.JsonEntity;
 import org.tinylog.Logger;
 
 import br.ufsc.sponge.server.repositories.FileRepository;
+import br.ufsc.sponge.server.repositories.ReplicationRepository;
 import br.ufsc.sponge.server.repositories.VirtualFile;
 
 /**
@@ -83,25 +84,35 @@ public class ClientController {
         var createdFile = FileRepository.getInstance().createFile(hFileName, Instant.now().toEpochMilli(), bContent);
         Logger.info("[createFile] File {} created", createdFile.toFileNameHash());
         // Replicate ===========================================================
-        
+        var success = ReplicationRepository.getInstance().replicateFileCreation(createdFile);
         // =====================================================================
-        // Serialize File Info
-        Logger.info("[createFile] Serializing response content");
-        var jcontent = JsonEntity.emptyObject().createObject("file").create("id", createdFile.getId())
-                .create("name", createdFile.getName()).create("size", createdFile.getSize())
-                .create("date", ZonedDateTime.ofInstant(createdFile.getDate().toInstant(), ZoneId.systemDefault())
-                        .format(DateTimeFormatter.ISO_INSTANT))
-                .parent();
-        var ffiledJson = jcontent.toString().getBytes();
-        // Send Headers
-        Logger.info("[createFile] Sending response");
-        var resHeaders = ctx.getResponseHeaders();
-        resHeaders.add("content-type", "application/json");
-        ctx.sendResponseHeaders(200, ffiledJson.length);
-        // Send Response
-        var response = ctx.getResponseBody();
-        response.write(ffiledJson);
-        response.close();
+        if (success) {
+            // Serialize File Info
+            Logger.info("[createFile] Serializing response content");
+            var jcontent = JsonEntity.emptyObject().createObject("file").create("id", createdFile.getId())
+                    .create("name", createdFile.getName()).create("size", createdFile.getSize())
+                    .create("date", ZonedDateTime.ofInstant(createdFile.getDate().toInstant(), ZoneId.systemDefault())
+                            .format(DateTimeFormatter.ISO_INSTANT))
+                    .parent();
+            var ffiledJson = jcontent.toString().getBytes();
+            // Send Headers
+            Logger.info("[createFile] Sending response");
+            var resHeaders = ctx.getResponseHeaders();
+            resHeaders.add("content-type", "application/json");
+            ctx.sendResponseHeaders(200, ffiledJson.length);
+            // Send Response
+            var response = ctx.getResponseBody();
+            response.write(ffiledJson);
+            response.close();
+        } else {
+            // Rollback
+            Logger.info("[createFile] Error on replication");
+            Logger.info("[createFile] Rollbacking file creating");
+            FileRepository.getInstance().deleteFile(createdFile.getId());
+            Logger.info("[createFile] Rollback complete");
+            Logger.info("[createFile] Sending response");
+            ctx.sendResponseHeaders(500, -1);
+        }
     }
 
     public void getFile(HttpExchange ctx) throws IOException {
@@ -177,25 +188,39 @@ public class ClientController {
                 }
                 // Save Updates
                 Logger.info("[updateFile] Saving file changes");
-                FileRepository.getInstance().updateFile(vFile, vFileHash, vFileId);
+                var originalFile = FileRepository.getInstance().updateFile(vFile, vFileHash, vFileId);
                 Logger.info("[updateFile] File saved");
-                // Serialize File Info
-                Logger.info("[updateFile] Serializing response content");
-                var jcontent = JsonEntity.emptyObject().createObject("file").create("id", vFile.getId())
-                        .create("name", vFile.getName()).create("size", vFile.getSize())
-                        .create("date", ZonedDateTime.ofInstant(vFile.getDate().toInstant(), ZoneId.systemDefault())
-                                .format(DateTimeFormatter.ISO_INSTANT))
-                        .parent();
-                var ffiledJson = jcontent.toString().getBytes();
-                // Send Headers
-                Logger.info("[updateFile] Sending response");
-                var resHeaders = ctx.getResponseHeaders();
-                resHeaders.add("content-type", "application/json");
-                ctx.sendResponseHeaders(200, ffiledJson.length);
-                // Send Response
-                var response = ctx.getResponseBody();
-                response.write(ffiledJson);
-                response.close();
+                // Replicate ===========================================================
+                Logger.info("[updateFile] Replicating update");
+                var success = ReplicationRepository.getInstance().replicateFileUpdate(vFile);
+                // =====================================================================
+                if (success) {
+                    // Serialize File Info
+                    Logger.info("[updateFile] Serializing response content");
+                    var jcontent = JsonEntity.emptyObject().createObject("file").create("id", vFile.getId())
+                            .create("name", vFile.getName()).create("size", vFile.getSize())
+                            .create("date", ZonedDateTime.ofInstant(vFile.getDate().toInstant(), ZoneId.systemDefault())
+                                    .format(DateTimeFormatter.ISO_INSTANT))
+                            .parent();
+                    var ffiledJson = jcontent.toString().getBytes();
+                    // Send Headers
+                    Logger.info("[updateFile] Sending response");
+                    var resHeaders = ctx.getResponseHeaders();
+                    resHeaders.add("content-type", "application/json");
+                    ctx.sendResponseHeaders(200, ffiledJson.length);
+                    // Send Response
+                    var response = ctx.getResponseBody();
+                    response.write(ffiledJson);
+                    response.close();
+                } else {
+                    // Rollback
+                    Logger.info("[updateFile] Error on replication");
+                    Logger.info("[updateFile] Rollbacking update");
+                    FileRepository.getInstance().updateFile(originalFile, vFile.toFileNameHash(), vFile.getId());
+                    Logger.info("[updateFile] Rollback complete");
+                    Logger.info("[updateFile] Sending response");
+                    ctx.sendResponseHeaders(500, -1);
+                }
             } else {
                 Logger.info("[getFile] File not found");
                 Logger.info("[getFile] Sending response");
@@ -220,7 +245,21 @@ public class ClientController {
             if (optVFile.isPresent()) {
                 // Removed File
                 Logger.info("[deleteFile] File {} removed", fId);
-                ctx.sendResponseHeaders(200, -1);
+                // Replicate ===========================================================
+                var success = ReplicationRepository.getInstance().replicateFileDeletion(optVFile.get());
+                // =====================================================================
+                if (success) {
+                    Logger.info("[deleteFile] Sending response");
+                    ctx.sendResponseHeaders(200, -1);
+                } else {
+                    // Rollback
+                    Logger.info("[deleteFile] Error on replication");
+                    Logger.info("[deleteFile] Rollbacking update");
+                    FileRepository.getInstance().createFileSlave(optVFile.get());
+                    Logger.info("[deleteFile] Rollback complete");
+                    Logger.info("[deleteFile] Sending response");
+                    ctx.sendResponseHeaders(500, -1);
+                }
             } else {
                 // File not found
                 Logger.info("[deleteFile] File does not exists", fId);
