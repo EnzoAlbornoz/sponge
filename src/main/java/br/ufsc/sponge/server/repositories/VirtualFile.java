@@ -107,6 +107,17 @@ public class VirtualFile {
         return this.physical;
     }
 
+    public VirtualFile clone(VirtualFile sFile) {
+        var vFile = new VirtualFile();
+        vFile.name = sFile.name;
+        vFile.id = sFile.id;
+        vFile.date = sFile.date;
+        vFile.size = sFile.size;
+        vFile.content = Optional.ofNullable(sFile.content.orElse(null));
+        vFile.physical = false;
+        return vFile;
+    }
+
     public String toFileNameHash() throws UnsupportedEncodingException {
         String[] params = {
             this.getId(),

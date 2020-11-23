@@ -111,34 +111,22 @@ public class FileRepository {
         }
         return cachedFile;
     }
-    public VirtualFile updateFile(VirtualFile modifiedFile, String originalFileHash, String originalFileId) throws IOException {
+    public void updateFile(VirtualFile originalFile, VirtualFile modifiedFile) throws IOException {
         Path sharedFolderPath = this.getSharedFolderPath();
-        Optional<VirtualFile> deletedFile = Optional.empty();
         try {
             // Start Transaction
-            deletedFile = Optional.of(this.cachedFiles.remove(originalFileId));
-            this.cachedFiles.put(modifiedFile.getId(), modifiedFile);
-            // Fetch Data for Backup
-            var deletedFileContent = new FileInputStream(
-                new File(
-                    this.getSharedFolderPath().toFile(),
-                    deletedFile.get().toFileNameHash()
-                    )
-                );
-                deletedFile.get().setContent(deletedFileContent.readAllBytes());
-            deletedFileContent.close();
             // Remove Old From FS
-            Files.deleteIfExists(sharedFolderPath.resolve(originalFileHash));
+            Files.deleteIfExists(sharedFolderPath.resolve(originalFile.toFileNameHash()));
             // Actually write file to the FS
             var fileWriter = new FileOutputStream(sharedFolderPath.resolve(modifiedFile.toFileNameHash()).toFile());
             fileWriter.write(modifiedFile.getContent().get());
             fileWriter.close();
+            this.cachedFiles.put(originalFile.getId(), modifiedFile);
             // End Transaction
-            return deletedFile.get();
         } catch (Exception e) {
             e.printStackTrace();
             // Rollback 
-            this.cachedFiles.put(originalFileId, deletedFile.get());
+            this.cachedFiles.put(originalFile.getId(), originalFile);
             // Throw to out scope
             throw e;
         }

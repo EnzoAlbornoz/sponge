@@ -165,9 +165,8 @@ public class ClientController {
             var optVFile = FileRepository.getInstance().getFile(fId);
             if (optVFile.isPresent()) {
                 var vFile = optVFile.get();
+                var oFile = vFile.clone(vFile);
                 Logger.info("[updateFile] File found");
-                var vFileHash = vFile.toFileNameHash();
-                var vFileId = vFile.getId();
                 // Fetch Context Data
                 var headers = ctx.getRequestHeaders();
                 var reqBody = ctx.getRequestBody();
@@ -188,7 +187,7 @@ public class ClientController {
                 }
                 // Save Updates
                 Logger.info("[updateFile] Saving file changes");
-                var originalFile = FileRepository.getInstance().updateFile(vFile, vFileHash, vFileId);
+                FileRepository.getInstance().updateFile(oFile, vFile);
                 Logger.info("[updateFile] File saved");
                 // Replicate ===========================================================
                 Logger.info("[updateFile] Replicating update");
@@ -216,7 +215,7 @@ public class ClientController {
                     // Rollback
                     Logger.info("[updateFile] Error on replication");
                     Logger.info("[updateFile] Rollbacking update");
-                    FileRepository.getInstance().updateFile(originalFile, vFile.toFileNameHash(), vFile.getId());
+                    FileRepository.getInstance().updateFile(vFile, oFile);
                     Logger.info("[updateFile] Rollback complete");
                     Logger.info("[updateFile] Sending response");
                     ctx.sendResponseHeaders(500, -1);
