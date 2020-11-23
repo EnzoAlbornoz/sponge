@@ -69,7 +69,7 @@ public class MasterConnector extends WebSocketServer implements IConnector {
 
     @Override
     public void onOpen(WebSocket socket, ClientHandshake arg1) {
-        // TODO Auto-generated method stub
+        Logger.info("[onOpen] Slave {} connected!", socket.getRemoteSocketAddress());
     }
 
     @Override
