@@ -36,7 +36,7 @@ public class App implements Callable<Integer> {
         description = "use an alternative configuration file",
         paramLabel = "<config file path>"
     )
-    private String configPath = "~/.sponge/config.yaml".replaceFirst("^~", System.getProperty("user.home"));
+    private String configPath = Path.of(System.getProperty("user.home"),"./.sponge/config.yaml").toString();
 
     @Override
     public Integer call() throws Exception {

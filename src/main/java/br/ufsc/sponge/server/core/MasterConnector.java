@@ -31,7 +31,7 @@ public class MasterConnector extends WebSocketServer implements IConnector {
     public static MasterConnector create(SettingsManager settings) {
         Logger.info("Initializing");
         // Get Options
-        var port = settings.getProperty(ServerConfiguration.MASTEROPTS_PORT);
+        var port = settings.getProperty(ServerConfiguration.MASTEROPTS_WS_PORT);
         var connector = new MasterConnector(new InetSocketAddress(port));
         // Define Instance Properties
         connector.settings = settings;

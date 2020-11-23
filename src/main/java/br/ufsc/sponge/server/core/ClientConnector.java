@@ -26,7 +26,7 @@ public class ClientConnector implements IConnector {
         // Instantiate Server
         this.server = HttpServer.create(
             new InetSocketAddress(
-                settings.getProperty(ServerConfiguration.INSTANCE_PORT)
+                settings.getProperty(ServerConfiguration.MASTEROPTS_HTTP_PORT)
             ),
             100 // Max de Conexões que ele faz bufffer
         );

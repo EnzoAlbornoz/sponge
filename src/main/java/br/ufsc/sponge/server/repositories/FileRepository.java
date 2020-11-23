@@ -34,8 +34,7 @@ public class FileRepository {
     }
 
     private Path getSharedFolderPath() {
-        var sharedFolderLocation = settings.getProperty(ServerConfiguration.INSTANCE_SHARED_FOLDER)
-            .replaceFirst("^~", System.getProperty("user.home"));
+        var sharedFolderLocation = settings.getProperty(ServerConfiguration.INSTANCE_SHARED_FOLDER);
         return Paths.get(sharedFolderLocation).toAbsolutePath().normalize();
     }
 
@@ -169,8 +168,7 @@ public class FileRepository {
 
     private boolean isStoragePresent() {
         var sharedFolderLocation = settings.
-            getProperty(ServerConfiguration.INSTANCE_SHARED_FOLDER)
-            .replaceFirst("^~", System.getProperty("user.home"));
+            getProperty(ServerConfiguration.INSTANCE_SHARED_FOLDER);
         Path sharedFolderPath = Paths.get(sharedFolderLocation).toAbsolutePath().normalize();
         return sharedFolderPath.toFile().exists();
     }
