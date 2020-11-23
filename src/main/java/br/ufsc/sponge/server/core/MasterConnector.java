@@ -96,7 +96,7 @@ public class MasterConnector extends WebSocketServer implements IConnector {
         });
         // Register Result Map on Instance
         broadcastMap = Optional.of(broadcastResultMap);
-        // Wait for Completititititition
+        // Wait for Completion
         var result = CompletableFuture.allOf(broadcastResultMap.values().toArray(CompletableFuture[]::new))
                 .thenApply(Failable.asFunction((_void) -> {
                     Logger.info("[broadcast] Processing results");
@@ -120,7 +120,7 @@ public class MasterConnector extends WebSocketServer implements IConnector {
             }));
         return result;
     }
-
+    // Filters to only the connections  
     public CompletableFuture<List<Pair<InetSocketAddress, Boolean>>> broadcast(List<InetSocketAddress> socketAddresses, Message message) {
         // Serialize
         Logger.info("[broadcast] Serializing message");
@@ -142,7 +142,7 @@ public class MasterConnector extends WebSocketServer implements IConnector {
         });
         // Register Result Map on Instance
         broadcastMap = Optional.of(broadcastResultMap);
-        // Wait for Completititititition
+        // Wait for Completion
         var result = CompletableFuture.allOf(broadcastResultMap.values().toArray(CompletableFuture[]::new))
                 .thenApply(Failable.asFunction((_void) -> {
                     Logger.info("[broadcast] Processing results");

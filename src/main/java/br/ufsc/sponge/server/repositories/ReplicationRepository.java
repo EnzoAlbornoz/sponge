@@ -47,6 +47,7 @@ public class ReplicationRepository {
         var message = new Message(vFile.toSerializable(), MessageCommand.CREATE);
         try {
             Logger.info("[replicateFileCreation] Sending command to Slaves");
+            // Send message
             var results = new ArrayList<>(this.connector.broadcast(message).get());
             Logger.info("[replicateFileCreation] Settled results");
             Logger.info("[replicateFileCreation] Checking for errors");
@@ -78,6 +79,7 @@ public class ReplicationRepository {
         var message = new Message(vFile.toSerializable(), MessageCommand.UPDATE);
         try {
             Logger.info("[replicateFileUpdate] Sending command to Slaves");
+            // Send Message
             var results = new ArrayList<>(this.connector.broadcast(message).get());
             Logger.info("[replicateFileUpdate] Settled results");
             Logger.info("[replicateFileUpdate] Checking for errors");
@@ -109,6 +111,7 @@ public class ReplicationRepository {
         var message = new Message(vFile.toSerializable(), MessageCommand.DELETE);
         try {
             Logger.info("[replicateFileDeletion] Sending command to Slaves");
+            // Sending Message
             var results = new ArrayList<>(this.connector.broadcast(message).get());
             Logger.info("[replicateFileDeletion] Settled results");
             Logger.info("[replicateFileDeletion] Checking for errors");
