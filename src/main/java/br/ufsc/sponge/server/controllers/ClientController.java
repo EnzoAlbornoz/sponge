@@ -107,7 +107,7 @@ public class ClientController {
         } else {
             // Rollback
             Logger.info("[createFile] Error on replication");
-            Logger.info("[createFile] Rollbacking file creating");
+            Logger.info("[createFile] Rollbacking creation");
             FileRepository.getInstance().deleteFile(createdFile.getId());
             Logger.info("[createFile] Rollback complete");
             Logger.info("[createFile] Sending response");
@@ -253,7 +253,7 @@ public class ClientController {
                 } else {
                     // Rollback
                     Logger.info("[deleteFile] Error on replication");
-                    Logger.info("[deleteFile] Rollbacking update");
+                    Logger.info("[deleteFile] Rollbacking delete");
                     FileRepository.getInstance().createFileSlave(optVFile.get());
                     Logger.info("[deleteFile] Rollback complete");
                     Logger.info("[deleteFile] Sending response");

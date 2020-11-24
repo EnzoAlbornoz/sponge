@@ -36,7 +36,7 @@ public class App implements Callable<Integer> {
         description = "use an alternative configuration file",
         paramLabel = "<config file path>"
     )
-    private String configPath = Path.of(System.getProperty("user.home")).resolve("./.sponge/storage").toString();
+    private String configPath = Path.of(System.getProperty("user.home")).resolve("./.sponge/storage").normalize().toString();
 
     @Override
     public Integer call() throws Exception {

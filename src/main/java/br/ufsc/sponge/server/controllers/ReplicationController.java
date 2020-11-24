@@ -28,7 +28,7 @@ public class ReplicationController{
         var vFile = VirtualFile.fromSerializable(message.file);
         Logger.info("[create] Received command on {}", vFile.getId());
         var success = FileRepository.getInstance().createFileSlave(vFile);
-        Logger.info("[create] Command result status: ", Boolean.toString(success));
+        Logger.info("[create] Command result status: {}", Boolean.toString(success));
         client.send(Boolean.toString(success));
     }
 
@@ -36,7 +36,7 @@ public class ReplicationController{
         var vFile = VirtualFile.fromSerializable(message.file);
         Logger.info("[update] Received command on {}", vFile.getId());
         var success = FileRepository.getInstance().updateFileSlave(vFile);
-        Logger.info("[update] Command result status", Boolean.toString(success));
+        Logger.info("[update] Command result status: {}", Boolean.toString(success));
         client.send(Boolean.toString(success));
     }
 
@@ -44,7 +44,7 @@ public class ReplicationController{
         var vFile = VirtualFile.fromSerializable(message.file);
         Logger.info("[delete] Received command on {}", vFile.getId());
         var success = FileRepository.getInstance().deleteFileSlave(vFile);
-        Logger.info("[delete] Command result status", Boolean.toString(success));
+        Logger.info("[delete] Command result status: {}", Boolean.toString(success));
         client.send(Boolean.toString(success));
     }
     
