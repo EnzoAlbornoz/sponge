@@ -45,7 +45,7 @@ public class App implements Callable<Integer> {
         Logger.info("[Core] Loading settings");
     
         final SettingsManager settingsManager = SettingsManagerBuilder
-            .withYamlFile(Path.of(configPath))
+            .withYamlFile(Path.of("./").resolve(configPath))
             .configurationData(ServerConfiguration.class)
             .useDefaultMigrationService()
             .create();
