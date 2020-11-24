@@ -6,7 +6,7 @@
 
   <groupId>br.ufsc</groupId>
   <artifactId>sponge</artifactId>
-  <version>0.0.1</version>
+  <version>0.1.0</version>
   <packaging>jar</packaging>
 
   <name>sponge</name>
@@ -27,12 +27,6 @@
       <classifier>standalone</classifier>
     </dependency>
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.11</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>ch.jalu</groupId>
       <artifactId>configme</artifactId>
       <version>1.2.0</version>
@@ -51,11 +45,6 @@
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-lang3</artifactId>
       <version>3.11</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-collections4</artifactId>
-      <version>4.4</version>
     </dependency>
     <dependency>
       <groupId>org.tinylog</groupId>
@@ -98,7 +87,7 @@
         <version>3.3.0</version>
         <executions>
           <execution>
-            <id>client</id>
+            <id>client_exec</id>
             <phase>package</phase>
             <goals>
               <goal>single</goal>
@@ -112,11 +101,12 @@
               <descriptorRefs>
                 <descriptorRef>jar-with-dependencies</descriptorRef>
               </descriptorRefs>
-              <finalName>Client</finalName>
+              <finalName>client_${project.version}</finalName>
+              <appendAssemblyId>false</appendAssemblyId>
             </configuration>
           </execution>
           <execution>
-            <id>server</id>
+            <id>server_exec</id>
             <phase>package</phase>
             <goals>
               <goal>single</goal>
@@ -130,7 +120,8 @@
               <descriptorRefs>
                 <descriptorRef>jar-with-dependencies</descriptorRef>
               </descriptorRefs>
-              <finalName>Server</finalName>
+              <finalName>server_${project.version}</finalName>
+              <appendAssemblyId>false</appendAssemblyId>
             </configuration>
           </execution>
         </executions>
